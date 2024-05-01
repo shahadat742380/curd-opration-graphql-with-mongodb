@@ -1,10 +1,14 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import { connect } from "mongoose";
-import Book from '../models/book.js';
+import dotenv from "dotenv";
+dotenv.config();
 
-const MONGODB =
-  "mongodb+srv://shahadatpeacockindia:5ZlaHIIBG4T85GRY@cluster0.c4tsixa.mongodb.net/Books?retryWrites=true&w=majority&appName=Cluster0";
+// import Schema
+import Book from "../models/book.js";
+
+// MongoDB url
+const MONGODB = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.c4tsixa.mongodb.net/Books?retryWrites=true&w=majority&appName=Cluster0`;
 
 const typeDefs = `#graphql
     type Book {
@@ -36,7 +40,10 @@ const typeDefs = `#graphql
         getBook(ID: ID!): Book
         getBooks(limit: Int): [Book]!
         books(input: BookFiltersInput): [Book]!
+        booksPerPage(page: Int!, perPage: Int!): [Book!]!
     }
+
+
 
     type Mutation {
         createBook(bookInput: BookInput): String!
@@ -46,6 +53,7 @@ const typeDefs = `#graphql
 `;
 
 const resolvers = {
+  // graphql query
   Query: {
     async getBook(_, { ID }) {
       return await Book.findById(ID);
@@ -53,8 +61,14 @@ const resolvers = {
     async getBooks(_, { limit }) {
       return await Book.find().limit(limit);
     },
+    async booksPerPage(_, { page, perPage }) { // Corrected resolver name
+      return await Book.find()
+        .skip((page - 1) * perPage)
+        .limit(perPage);
+    },
   },
 
+  // graphql mutation
   Mutation: {
     async createBook(_, { bookInput: { author, title, year } }) {
       const res = await new Book({ author, title, year }).save();
@@ -72,12 +86,13 @@ const resolvers = {
       await Book.deleteOne({ _id: ID });
       return ID;
     },
-
   },
 };
 
+// Connect DB
 await connect(MONGODB);
 
+// Server
 const server = new ApolloServer({
   typeDefs,
   resolvers,
