@@ -1,0 +1,21 @@
+{
+  "name": "curd-with-mongodb",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "compile": "tsc",
+    "build": "npm run compile",
+    "start": "node ./dist/src/index.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@apollo/server": "^4.10.4",
+    "@types/node": "^20.12.7",
+    "graphql": "^16.8.1",
+    "mongoose": "^8.3.3"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  }
+}
