@@ -8,6 +8,7 @@ dotenv.config();
 // import Schema
 import Book from "../models/book.js";
 import User from "../models/user.js";
+import { Console } from "console";
 
 // MongoDB url
 const MONGODB = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.c4tsixa.mongodb.net/Books?retryWrites=true&w=majority&appName=Cluster0`;
@@ -90,9 +91,17 @@ const resolvers = {
   // graphql mutation
   Mutation: {
     // create User
-    async createUser( _, {userInput: {firstName, lastName, email, password }}){
-      const res = await new User({firstName, lastName, email, password}).save();
-      return res._id
+    async createUser(
+      _,
+      { userInput: { firstName, lastName, email, password } }
+    ) {
+      const res = await new User({
+        firstName,
+        lastName,
+        email,
+        password,
+      }).save();
+      return res._id;
     },
     // Create Book
     async createBook(_, { bookInput: { author, title, year } }) {
@@ -111,22 +120,24 @@ const resolvers = {
       return ID;
     },
 
-    async login(_, { email, password }) { 
+    async login(_, { email, password }) {
       const user = await User.findOne({ email });
 
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
 
       if (user.password !== password) {
-        throw new Error('Password is incorrect');
+        throw new Error("Password is incorrect");
       }
 
-      const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET); 
+      const token = jwt.sign(
+        { userId: user._id, email: user.email },
+        process.env.JWT_SECRET
+      );
 
-      return { userId: user._id, token }; token
+      return { userId: user._id, token };
     },
-
   },
 };
 
