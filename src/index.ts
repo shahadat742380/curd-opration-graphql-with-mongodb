@@ -8,7 +8,7 @@ dotenv.config();
 // import Schema
 import Book from "../models/book.js";
 import User from "../models/user.js";
-import { Console } from "console";
+import { Console, error } from "console";
 
 // MongoDB url
 const MONGODB = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.c4tsixa.mongodb.net/Books?retryWrites=true&w=majority&appName=Cluster0`;
@@ -53,6 +53,7 @@ const typeDefs = `#graphql
         getBook(ID: ID!): Book
         getBooks(limit: Int): [Book]!
         booksPerPage(page: Int!, perPage: Int!): [Book!]!
+        getCurrentLoggedInUser: User!
     }
 
     type Mutation {
@@ -63,6 +64,16 @@ const typeDefs = `#graphql
         login(email: String!, password: String!): AuthData!
     }
 `;
+
+// Function to verify a JWT
+function verifyToken(token) {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded;
+  } catch (err) {
+    throw new Error("Invalid token");
+  }
+}
 
 const resolvers = {
   // graphql query
@@ -85,6 +96,20 @@ const resolvers = {
       return await Book.find()
         .skip((page - 1) * perPage)
         .limit(perPage);
+    },
+    // get login user
+    getCurrentLoggedInUser: async (_: any, args: any, context: any) => {
+      if (context) {
+        // Verify the JWT in the request headers
+        const token = context.headers.authorization;
+        // console.log(token, "token")
+        const decodedToken = verifyToken(token);
+        // @ts-ignore
+        const email = decodedToken.email;
+        const user = User.findOne({ email })
+        return user;
+      }
+      throw new Error("I don't know who are you");
     },
   },
 
@@ -133,7 +158,7 @@ const resolvers = {
 
       const token = jwt.sign(
         { userId: user._id, email: user.email },
-        process.env.JWT_SECRET
+        process.env.JWT_SECRET, {expiresIn: "7d"}
       );
 
       return { userId: user._id, token };
@@ -154,6 +179,9 @@ const port = Number.parseInt(process.env.PORT) || 4000;
 
 const { url } = await startStandaloneServer(server, {
   listen: { port: port },
+  context: async ({ req, res }) => {
+    return req;
+  },
 });
 
 console.log(`Server is ready at ${url}`);
