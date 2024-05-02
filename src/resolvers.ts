@@ -17,16 +17,19 @@ function verifyToken(token) {
   export const resolvers = {
     // graphql query
     Query: {
+        // get single user by email
       async getUserByEmail(_, { email }) {
         return await User.findOne({ email });
       },
+    //   get all user
       async getUsers(_, { limit }) {
         return await User.find().limit(limit);
       },
-  
+    //   get single book by id
       async getBook(_, { ID }) {
         return await Book.findById(ID);
       },
+    //   get all books
       async getBooks(_, { limit }) {
         return await Book.find().limit(limit);
       },
@@ -41,7 +44,6 @@ function verifyToken(token) {
         if (context) {
           // Verify the JWT in the request headers
           const token = context.headers.authorization;
-          // console.log(token, "token")
           const decodedToken = verifyToken(token);
           // @ts-ignore
           const email = decodedToken.email;
@@ -83,7 +85,7 @@ function verifyToken(token) {
         await Book.deleteOne({ _id: ID });
         return ID;
       },
-  
+    //   login user and create token
       async login(_, { email, password }) {
         const user = await User.findOne({ email });
   
