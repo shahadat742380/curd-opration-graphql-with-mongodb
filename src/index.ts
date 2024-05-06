@@ -15,7 +15,6 @@ import User from "../models/user.js";
 // MongoDB url
 const MONGODB = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.c4tsixa.mongodb.net/Books?retryWrites=true&w=majority&appName=Cluster0`;
 
-
 const typeDefs = `#graphql
     type Book{
         _id: String
@@ -69,15 +68,15 @@ const typeDefs = `#graphql
 `;
 
 
-
 // Function to verify a JWT
 function verifyToken(token) {
-  try {
+  if(token){
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     return decoded;
-  } catch (err) {
-    throw new Error("Please Login again!");
   }
+
+  return {message: "token is null", status: 400}
+ 
 }
 
 const resolvers = {
@@ -116,7 +115,7 @@ const resolvers = {
         const user = User.findOne({ email });
         return user;
       }
-      throw new Error("Please Login again.");
+      return {message: "Authorization fail", status: 400}
     },
   },
 
@@ -176,7 +175,6 @@ const resolvers = {
     },
   },
 };
-
 
 // Connect DB
 await connect(MONGODB);
